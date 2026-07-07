@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0F1E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vendas">
+<title>Registro de Vendas</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root {
+    --bg:       #0A0F1E;
+    --panel:    #0D1526;
+    --card:     #111D35;
+    --border:   #1A2744;
+    --blue:     #1E6FD9;
+    --cyan:     #00B4D8;
+    --green:    #00C896;
+    --gold:     #F4A82A;
+    --red:      #E84545;
+    --text:     #E8EDF5;
+    --muted:    #5A7298;
+    --radius:   10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 { font-size: 16px; font-weight: 700; letter-spacing: 1px; color: var(--blue); }
+  header span { font-size: 11px; color: var(--muted); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 53px;
+    z-index: 99;
+  }
+  .tab {
+    flex: 1;
+    padding: 12px 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px; }
+  .screen.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* FORM */
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 4px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  input, select, textarea {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-size: 14px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--blue); }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  select option { background: var(--panel); }
+
+  /* GRID 2 cols */
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* PAGAMENTO BUTTONS */
+  .pag-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .pag-btn {
+    padding: 10px 8px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+    font-family: inherit;
+  }
+  .pag-btn.sel-dinheiro { border-color: var(--green);  color: var(--green);  background: rgba(0,200,150,.1); }
+  .pag-btn.sel-pix      { border-color: var(--gold);   color: var(--gold);   background: rgba(244,168,42,.1); }
+  .pag-btn.sel-debito   { border-color: var(--blue);   color: var(--blue);   background: rgba(30,111,217,.1); }
+  .pag-btn.sel-credito  { border-color: var(--cyan);   color: var(--cyan);   background: rgba(0,180,216,.1); }
+
+  /* ITEM LIST */
+  .item-list { margin-bottom: 12px; }
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-info { flex: 1; }
+  .item-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .item-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .item-val  { font-size: 14px; font-weight: 700; color: var(--green); white-space: nowrap; }
+  .btn-remove {
+    background: rgba(232,69,69,.15);
+    border: 1px solid rgba(232,69,69,.3);
+    border-radius: 6px;
+    color: var(--red);
+    font-size: 16px;
+    width: 30px; height: 30px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+
+  /* TOTAL BOX */
+  .total-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .total-label { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .total-val   { font-size: 28px; font-weight: 700; color: var(--gold); }
+
+  /* BUTTONS */
+  .btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: .5px;
+    transition: opacity .2s;
+  }
+  .btn:active { opacity: .8; }
+  .btn-primary  { background: var(--blue);  color: #fff; }
+  .btn-success  { background: var(--green); color: #fff; }
+  .btn-gold     { background: var(--gold);  color: #fff; }
+  .btn-outline  {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .btn-danger   { background: var(--red);   color: #fff; }
+  .btn + .btn   { margin-top: 8px; }
+
+  /* VENDA CARD no histórico */
+  .venda-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .venda-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .venda-num  { font-size: 11px; color: var(--muted); font-weight: 700; }
+  .venda-tot  { font-size: 18px; font-weight: 700; color: var(--gold); }
+  .venda-info { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: .5px;
+  }
+  .badge-dinheiro { background: rgba(0,200,150,.15);  color: var(--green); }
+  .badge-pix      { background: rgba(244,168,42,.15); color: var(--gold); }
+  .badge-debito   { background: rgba(30,111,217,.15); color: var(--blue); }
+  .badge-credito  { background: rgba(0,180,216,.15);  color: var(--cyan); }
+
+  /* RESUMO CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+  }
+  .kpi-val   { font-size: 22px; font-weight: 700; color: var(--gold); }
+  .kpi-label { font-size: 10px; color: var(--muted); margin-top: 4px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--green);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 700;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity .3s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* EXPORT BTN */
+  .export-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .export-bar .btn { margin: 0; }
+
+  /* SECTION TITLE */
+  .sec-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    margin-top: 4px;
+  }
+
+  /* EMPTY ITEMS note */
+  .note {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    padding: 12px;
+    border: 1px dashed var(--border);
+    border-radius: 7px;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>REGISTRO DE VENDAS</h1>
+    <span id="hd-date"></span>
+  </div>
+  <span id="hd-count" style="font-size:13px;color:var(--gold);font-weight:700;"></span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('nova')">Nova Venda</div>
+  <div class="tab" onclick="showTab('historico')">Histórico</div>
+  <div class="tab" onclick="showTab('resumo')">Resumo</div>
+</div>
+
+<!-- ══════════ TELA NOVA VENDA ══════════ -->
+<div id="tab-nova" class="screen active">
+
+  <div class="card">
+    <div class="card-title">Dados do cliente</div>
+    <label>Nome do cliente</label>
+    <input type="text" id="f-cliente" placeholder="Ex: João Silva (opcional)">
+  </div>
+
+  <div class="card">
+    <div class="card-title">Adicionar item</div>
+    <label>Produto / Serviço</label>
+    <input type="text" id="f-produto" placeholder="Nome do produto ou serviço">
+    <div class="row2">
+      <div>
+        <label>Quantidade</label>
+        <input type="number" id="f-qtd" placeholder="1" min="1" value="1">
+      </div>
+      <div>
+        <label>Valor unitário (R$)</label>
+        <input type="number" id="f-valor" placeholder="0,00" min="0" step="0.01">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="addItem()">+ Adicionar Item</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Itens da venda</div>
+    <div class="item-list" id="item-list">
+      <div class="note">Nenhum item adicionado ainda.</div>
+    </div>
+    <div class="total-box">
+      <div>
+        <div class="total-label">Total da Venda</div>
+      </div>
+      <div class="total-val" id="total-display">R$ 0,00</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Forma de pagamento</div>
+    <div class="pag-grid">
+      <button class="pag-btn" onclick="selPag('Dinheiro', this)" id="pag-dinheiro">💵 Dinheiro</button>
+      <button class="pag-btn" onclick="selPag('PIX', this)"      id="pag-pix">     📱 PIX</button>
+      <button class="pag-btn" onclick="selPag('Débito', this)"   id="pag-debito">  💳 Débito</button>
+      <button class="pag-btn" onclick="selPag('Crédito', this)"  id="pag-credito"> 💳 Crédito</button>
+    </div>
+    <div id="pag-sel" style="font-size:12px;color:var(--muted);margin-bottom:8px;">Nenhuma forma selecionada</div>
+  </div>
+
+  <button class="btn btn-success" onclick="finalizarVenda()">✔ FINALIZAR VENDA</button>
+  <button class="btn btn-outline" onclick="cancelarVenda()" style="margin-top:8px;">Cancelar e limpar</button>
+
+</div>
+
+<!-- ══════════ TELA HISTÓRICO ══════════ -->
+<div id="tab-historico" class="screen">
+  <div class="export-bar">
+    <button class="btn btn-gold" style="flex:1" onclick="exportarJSON()">📤 Enviar pelo WhatsApp</button>
+    <button class="btn btn-outline" style="flex:0 0 auto;padding:13px 16px;" onclick="limparTudo()">🗑</button>
+  </div>
+  <div id="historico-list"></div>
+</div>
+
+<!-- ══════════ TELA RESUMO ══════════ -->
+<div id="tab-resumo" class="screen">
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-count">0</div>
+      <div class="kpi-label">Vendas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-total">R$ 0</div>
+      <div class="kpi-label">Faturamento</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-ticket">R$ 0</div>
+      <div class="kpi-label">Ticket Médio</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-itens">0</div>
+      <div class="kpi-label">Itens Vendidos</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Por forma de pagamento</div>
+    <div id="resumo-pag"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let itens = [];
+let pagamento = '';
+let vendas = JSON.parse(localStorage.getItem('vendas') || '[]');
+
+// ── INIT ──
+const now = new Date();
+document.getElementById('hd-date').textContent =
+  now.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short', year:'numeric'});
+
+renderAll();
+
+// ── TABS ──
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['nova','historico','resumo'][i] === id);
+  });
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id !== 'nova') renderAll();
+}
+
+// ── ITENS ──
+function addItem() {
+  const prod  = document.getElementById('f-produto').value.trim();
+  const qtd   = parseFloat(document.getElementById('f-qtd').value) || 1;
+  const valor = parseFloat(document.getElementById('f-valor').value) || 0;
+  if (!prod)  { toast('Informe o produto!', 'red'); return; }
+  if (!valor) { toast('Informe o valor!',   'red'); return; }
+  itens.push({ produto: prod, qtd, valor, subtotal: +(qtd * valor).toFixed(2) });
+  document.getElementById('f-produto').value = '';
+  document.getElementById('f-qtd').value = '1';
+  document.getElementById('f-valor').value = '';
+  renderItens();
+  document.getElementById('f-produto').focus();
+}
+
+function removeItem(i) {
+  itens.splice(i, 1);
+  renderItens();
+}
+
+function renderItens() {
+  const el = document.getElementById('item-list');
+  if (!itens.length) {
+    el.innerHTML = '<div class="note">Nenhum item adicionado ainda.</div>';
+    document.getElementById('total-display').textContent = 'R$ 0,00';
+    return;
+  }
+  let total = 0;
+  el.innerHTML = itens.map((it, i) => {
+    total += it.subtotal;
+    return `<div class="item-row">
+      <div class="item-info">
+        <div class="item-name">${it.produto}</div>
+        <div class="item-sub">${it.qtd}x R$ ${fmt(it.valor)}</div>
+      </div>
+      <div class="item-val">R$ ${fmt(it.subtotal)}</div>
+      <button class="btn-remove" onclick="removeItem(${i})">×</button>
+    </div>`;
+  }).join('');
+  document.getElementById('total-display').textContent = 'R$ ' + fmt(total);
+}
+
+// ── PAGAMENTO ──
+function selPag(forma, btn) {
+  pagamento = forma;
+  const map = {Dinheiro:'dinheiro',PIX:'pix','Débito':'debito','Crédito':'credito'};
+  document.querySelectorAll('.pag-btn').forEach(b => {
+    b.className = 'pag-btn';
+  });
+  btn.classList.add('sel-' + map[forma]);
+  document.getElementById('pag-sel').textContent = '✔ ' + forma + ' selecionado';
+  document.getElementById('pag-sel').style.color = 'var(--green)';
+}
+
+// ── FINALIZAR ──
+function finalizarVenda() {
+  if (!itens.length)  { toast('Adicione pelo menos 1 item!', 'red'); return; }
+  if (!pagamento)     { toast('Selecione a forma de pagamento!', 'red'); return; }
+  const total = itens.reduce((s, it) => s + it.subtotal, 0);
+  const venda = {
+    id:        vendas.length + 1,
+    data:      new Date().toISOString(),
+    cliente:   document.getElementById('f-cliente').value.trim() || 'Não informado',
+    itens:     [...itens],
+    pagamento,
+    total:     +total.toFixed(2)
+  };
+  vendas.push(venda);
+  localStorage.setItem('vendas', JSON.stringify(vendas));
+  itens = []; pagamento = '';
+  document.getElementById('f-cliente').value = '';
+  document.querySelectorAll('.pag-btn').forEach(b => b.className = 'pag-btn');
+  document.getElementById('pag-sel').textContent = 'Nenhuma forma selecionada';
+  document.getElementById('pag-sel').style.color = '';
+  renderItens();
+  renderAll();
+  toast('Venda #' + venda.id + ' registrada!');
+}
+
+function cancelarVenda() {
+  if (!itens.length && !pagamento) return;
+  if (!confirm('Cancelar a venda atual?')) return;
+  itens = []; pagamento = '';
+  document.getElementById('f-cliente').value = '';
+  document.querySelectorAll('.pag-btn').forEach(b => b.className = 'pag-btn');
+  document.getElementById('pag-sel').textContent = 'Nenhuma forma selecionada';
+  document.getElementById('pag-sel').style.color = '';
+  renderItens();
+}
+
+// ── HISTÓRICO ──
+function renderHistorico() {
+  const el = document.getElementById('historico-list');
+  document.getElementById('hd-count').textContent = vendas.length + ' venda(s)';
+  if (!vendas.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🛒</div>Nenhuma venda registrada ainda.</div>';
+    return;
+  }
+  const map = {Dinheiro:'dinheiro',PIX:'pix','Débito':'debito','Crédito':'credito'};
+  el.innerHTML = [...vendas].reverse().map(v => {
+    const hora = new Date(v.data).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const itensTxt = v.itens.map(it => `${it.qtd}x ${it.produto}`).join(', ');
+    return `<div class="venda-card">
+      <div class="venda-header">
+        <div>
+          <div class="venda-num">VENDA #${String(v.id).padStart(4,'0')} · ${hora}</div>
+          <div style="font-size:13px;font-weight:600;margin-top:2px;">${v.cliente}</div>
+        </div>
+        <div class="venda-tot">R$ ${fmt(v.total)}</div>
+      </div>
+      <div class="venda-info">${itensTxt}</div>
+      <span class="badge badge-${map[v.pagamento]||'pix'}">${v.pagamento}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── RESUMO ──
+function renderResumo() {
+  const count  = vendas.length;
+  const total  = vendas.reduce((s,v) => s+v.total, 0);
+  const ticket = count ? total/count : 0;
+  const itensTotal = vendas.reduce((s,v) => s + v.itens.reduce((a,i)=>a+i.qtd,0), 0);
+  document.getElementById('kpi-count').textContent  = count;
+  document.getElementById('kpi-total').textContent  = 'R$ ' + fmt(total);
+  document.getElementById('kpi-ticket').textContent = 'R$ ' + fmt(ticket);
+  document.getElementById('kpi-itens').textContent  = itensTotal;
+
+  const formas = {};
+  vendas.forEach(v => {
+    formas[v.pagamento] = (formas[v.pagamento]||0) + v.total;
+  });
+  const cores = {Dinheiro:'var(--green)',PIX:'var(--gold)','Débito':'var(--blue)','Crédito':'var(--cyan)'};
+  const rpEl = document.getElementById('resumo-pag');
+  if (!Object.keys(formas).length) {
+    rpEl.innerHTML = '<div class="note">Nenhuma venda registrada.</div>'; return;
+  }
+  rpEl.innerHTML = Object.entries(formas).map(([f,t]) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;">${f}</span>
+      <span style="font-size:15px;font-weight:700;color:${cores[f]||'var(--text)'}">R$ ${fmt(t)}</span>
+    </div>`).join('');
+}
+
+function renderAll() {
+  renderHistorico();
+  renderResumo();
+}
+
+// ── EXPORTAR / WHATSAPP ──
+function exportarJSON() {
+  if (!vendas.length) { toast('Nenhuma venda para exportar!', 'red'); return; }
+
+  // Gera resumo legível
+  const total = vendas.reduce((s,v) => s+v.total, 0);
+  let txt = `*VENDAS DO DIA — ${new Date().toLocaleDateString('pt-BR')}*\n`;
+  txt += `Total de vendas: ${vendas.length}\n`;
+  txt += `Faturamento: R$ ${fmt(total)}\n\n`;
+  vendas.forEach(v => {
+    const hora = new Date(v.data).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    txt += `*Venda #${String(v.id).padStart(4,'0')}* · ${hora}\n`;
+    txt += `Cliente: ${v.cliente}\n`;
+    v.itens.forEach(it => txt += `  • ${it.qtd}x ${it.produto} = R$ ${fmt(it.subtotal)}\n`);
+    txt += `Pagamento: ${v.pagamento} | Total: R$ ${fmt(v.total)}\n\n`;
+  });
+
+  // Também gera JSON para importação futura
+  const json = JSON.stringify({ exportado_em: new Date().toISOString(), vendas }, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `vendas_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Abre WhatsApp com o resumo
+  setTimeout(() => {
+    const waUrl = 'https://wa.me/?text=' + encodeURIComponent(txt);
+    window.open(waUrl, '_blank');
+  }, 500);
+
+  toast('Arquivo baixado + WhatsApp aberto!');
+}
+
+function limparTudo() {
+  if (!vendas.length) return;
+  if (!confirm('Apagar TODAS as vendas do histórico?')) return;
+  vendas = [];
+  localStorage.setItem('vendas', JSON.stringify(vendas));
+  renderAll();
+  toast('Histórico limpo!');
+}
+
+// ── UTILS ──
+function fmt(n) {
+  return Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type === 'red' ? 'var(--red)' : 'var(--green)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// Enter no campo produto
+document.getElementById('f-valor').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addItem();
+});
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js');
+  });
+}
+</script>
+</body>
+</html>
