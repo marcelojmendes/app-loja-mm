@@ -1,0 +1,56 @@
+function exportarJSON() {
+  if (!vendas.length) { toast('Nenhuma venda para exportar!', 'red'); return; }
+
+  const total = vendas.reduce((s,v) => s+v.total, 0);
+  const data  = new Date().toLocaleDateString('pt-BR');
+  const hora  = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  // Texto para WhatsApp
+  let txt = `*VENDAS DO DIA — ${data} às ${hora}*\n`;
+  txt += `Total de vendas: ${vendas.length}\n`;
+  txt += `Faturamento: R$ ${fmt(total)}\n\n`;
+  vendas.forEach(v => {
+    const h = new Date(v.data).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    txt += `*Venda #${String(v.id).padStart(4,'0')}* · ${h}\n`;
+    txt += `Cliente: ${v.cliente}\n`;
+    v.itens.forEach(it => txt += `  • ${it.qtd}x ${it.produto} = R$ ${fmt(it.subtotal)}\n`);
+    txt += `Pagamento: ${v.pagamento} | Total: R$ ${fmt(v.total)}\n\n`;
+  });
+
+  // JSON para importação no sistema
+  const json = JSON.stringify({
+    exportado_em: new Date().toISOString(),
+    loja: "Loja Y",
+    vendas
+  }, null, 2);
+
+  // Tentar baixar o arquivo
+  try {
+    const blob = new Blob([json], {type:'application/json'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `vendas_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('Arquivo baixado!');
+  } catch(e) {
+    // Fallback: mostrar JSON para copiar
+    const area = document.createElement('textarea');
+    area.value = json;
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand('copy');
+    document.body.removeChild(area);
+    toast('JSON copiado! Cole em um arquivo .json');
+  }
+
+  // Abre WhatsApp após 1 segundo
+  setTimeout(() => {
+    window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+  }, 1000);
+}
